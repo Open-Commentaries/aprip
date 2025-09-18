@@ -26,7 +26,7 @@ export type Comment = {
   citable_urn?: string;
   commentaryAttributes?: CommentaryAttributes;
   content?: string;
-  ctsUrn: CTS_URN;
+  ctsUrn?: CTS_URN;
   end_offset?: string;
   image_paths?: string;
   isHighlighted?: boolean;
@@ -39,7 +39,7 @@ export type Comment = {
 };
 
 export type CommentaryAttributes = {
-  creators?: Author[];
+  authors?: Author[];
   edition?: string;
   filename?: string;
   languages?: string[];

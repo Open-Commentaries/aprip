@@ -19,22 +19,8 @@ function Meta(m)
     return m
 end
 
-function Para(para)
-    if para.content[1].text ~= nil then
-        local _, _, location = para.content[1].text:find(locationPattern)
-
-        if location ~= nil then
-            local citation = "@" .. urn .. ":" .. location
-
-            return pandoc.Div({
-                pandoc.Para(pandoc.utils.stringify(para.content[1].text:gsub(locationPattern, ""))),
-                pandoc.Para(slice(para.content, 2, #para.content))
-            }, { id = citation })
-        end
-    end
-
-    return para
-end
+local currentUrn = ""
+local tokens = {}
 
 function Div(div)
     if div.attributes["custom-style"] == "chs_h1" then
@@ -56,4 +42,50 @@ function Div(div)
     end
 
     return div
+end
+
+function Span(span)
+    if span.attributes["custom-style"] == "chs_translit_Greek"
+        or span.attributes["custom-style"] == "chs_emphasis" then
+        return pandoc.Emph(span.content)
+    end
+
+    if span.attributes["custom-style"] == "chs_foreign" then
+        return span.content
+    end
+
+    return span
+end
+
+function Str(str)
+    local _, _, location = str.text:find(locationPattern)
+
+    if location ~= nil then
+        local citation = "@" .. urn .. ":" .. location
+        currentUrn = citation
+        tokens = {}
+
+        return {
+            pandoc.Str("---"),
+            pandoc.Str("\n\n"),
+            pandoc.Str(citation),
+            pandoc.Str("\n\n")
+        }
+    end
+
+    if not str.text:match("%w+") then
+        return str
+    end
+
+    local tokenIndex = 0
+
+    if tokens[str.text] == nil then
+        tokenIndex = 1
+        tokens[str.text] = tokenIndex
+    else
+        tokenIndex = tokens[str.text] + 1
+        tokens[str.text] = tokenIndex
+    end
+
+    return pandoc.Span(str, { id = currentUrn .. "@" .. str.text:gsub("%W", "") .. "[" .. tokenIndex .. "]" })
 end

@@ -11,20 +11,38 @@ function Meta(m)
     return m
 end
 
-function Para(para)
-    if para.content[1].text ~= nil then
-        local _, _, location = para.content[1].text:find(locationPattern)
+-- function Para(para)
+--     if para.content[1].text ~= nil then
+--         local _, _, location = para.content[1].text:find(locationPattern)
 
-        if location ~= nil then
-            local citation = "@" .. urn .. ":" .. location
+--         if location ~= nil then
+--             local citation = "@" .. urn .. ":" .. location
 
-            return {
-                pandoc.Header(3, pandoc.Str(citation))
-            }
-        end
+--             return {
+--                 pandoc.Header(3, pandoc.Str(citation))
+--             }
+--         end
+--     end
+
+--     return para
+-- end
+
+
+function Str(str)
+    local _, _, location = str.text:find(locationPattern)
+
+    if location ~= nil then
+        local citation = "@" .. urn .. ":" .. location
+        currentUrn = citation
+        tokens = {}
+
+        return {
+            pandoc.Str("---"),
+            pandoc.Str("\n\n"),
+            pandoc.Str(citation),
+            pandoc.Str("\n\n")
+        }
     end
-
-    return para
 end
 
 function Div(div)
@@ -69,4 +87,12 @@ function Div(div)
     end
 
     return div
+end
+
+function Span(span)
+    if span.attributes["custom-style"] == "chs_translit_Greek" then
+        return pandoc.Emph(span.content)
+    end
+
+    return span
 end

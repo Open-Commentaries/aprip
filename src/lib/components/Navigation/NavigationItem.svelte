@@ -20,23 +20,21 @@
 	);
 </script>
 
-<li class="rounded-none" class:bg-secondary={isUnderlined}>
+<li class="rounded-none">
 	{#if passage.subpassages?.length}
 		<details open={isUnderlined}>
 			<summary>
-				<span class:underline={isUnderlined}>{passage.label}</span>
-				{passage.ref}
+				<span class:underline={isUnderlined}>{passage.label} {passage.ref}</span>
 			</summary>
 			<ul>
-				{#each passage.subpassages as subpassage (subpassage.label)}
+				{#each passage.subpassages as subpassage (`${passage.ref}-${subpassage.ref}`)}
 					<NavigationItem passage={subpassage} {currentPassageUrn} />
 				{/each}
 			</ul>
 		</details>
 	{:else}
 		<a href={resolve('/passages/[urn]', { urn: passage.urn })}>
-			<span class:underline={isUnderlined}>{passage.label}</span>
-			{passage.ref}
+			<span class:underline={isUnderlined}>{passage.label} {passage.ref}</span>
 		</a>
 	{/if}
 </li>
