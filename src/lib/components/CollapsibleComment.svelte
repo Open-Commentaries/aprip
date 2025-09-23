@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Author, Comment } from '$lib/types.js';
+	import type { Comment } from '$lib/types.js';
 
 	interface Props {
 		comment: Comment;
@@ -8,7 +8,6 @@
 
 	let { comment, stringifyCommentCitation }: Props = $props();
 
-	let authors = $derived(comment.commentaryAttributes?.authors as Author[]);
 	let isHighlighted = $derived(comment.isHighlighted);
 	let isOpen = $derived(isHighlighted);
 

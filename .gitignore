@@ -30,3 +30,5 @@ storybook-static
 *.docx
 
 .zed
+
+.venv

@@ -1,15 +1,27 @@
+JSON = require "pandoc_filters/json"
+
+local function load_named_entities()
+    local namedEntitiesFile = io.open(
+        "static/named-entity-annotations/tlg0525.tlg001.perseus-grc2.named-entities.json",
+        "r")
+
+    if not namedEntitiesFile then return nil end
+
+    local namedEntitiesRaw = namedEntitiesFile:read "*a"
+
+    namedEntitiesFile:close()
+
+    return JSON.decode(namedEntitiesRaw)
+end
+
+NAMED_ENTITIES = load_named_entities()
+
+print(NAMED_ENTITIES[2]["entity_urn"])
+
 local locationPattern = "{(%d+%.%d+%.%d+)}"
 local authors = {}
 local urn = "urn:cts:greekLit:tlg0525.tlg001.aprip-nagy"
 local title = ""
-
-local function slice(t, start, stop)
-    local sliced = {}
-    for i = start, stop or #t do
-        table.insert(sliced, t[i])
-    end
-    return sliced
-end
 
 function Meta(m)
     m.authors = authors
