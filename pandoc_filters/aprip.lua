@@ -2,7 +2,7 @@ JSON = require "pandoc_filters/json"
 
 local function load_named_entities()
     local namedEntitiesFile = io.open(
-        "static/named-entity-annotations/tlg0525.tlg001.perseus-grc2.named-entities.json",
+        "static/named-entity-annotations/tlg0525.tlg001.perseus-grc2.entities.json",
         "r")
 
     if not namedEntitiesFile then return nil end
@@ -15,8 +15,6 @@ local function load_named_entities()
 end
 
 NAMED_ENTITIES = load_named_entities()
-
-print(NAMED_ENTITIES[2]["entity_urn"])
 
 local locationPattern = "{(%d+%.%d+%.%d+)}"
 local authors = {}
@@ -97,6 +95,10 @@ function Str(str)
     else
         tokenIndex = tokens[str.text] + 1
         tokens[str.text] = tokenIndex
+    end
+
+    if tokenIndex == 1 then
+        return pandoc.Span(str, { id = currentUrn .. "@" .. str.text:gsub("%W", "") })
     end
 
     return pandoc.Span(str, { id = currentUrn .. "@" .. str.text:gsub("%W", "") .. "[" .. tokenIndex .. "]" })

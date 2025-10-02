@@ -20,7 +20,7 @@
 	);
 </script>
 
-<li class="rounded-none">
+<li class="rounded-none overflow-y-auto max-h-64">
 	{#if passage.subpassages?.length}
 		<details open={isUnderlined}>
 			<summary>

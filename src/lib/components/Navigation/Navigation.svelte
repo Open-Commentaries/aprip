@@ -11,7 +11,7 @@
 	let { passages, currentPassageUrn }: Props = $props();
 </script>
 
-<ul class="menu overflow-x-hidden overflow-y-auto bg-base-200">
+<ul class="menu overflow-x-hidden overflow-y-auto bg-base-200 w-50">
 	{#each passages as passage (passage.urn)}
 		<NavigationItem {passage} {currentPassageUrn} />
 	{/each}

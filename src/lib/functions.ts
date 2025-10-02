@@ -8,6 +8,7 @@ import remarkRehype from 'remark-rehype';
 import { unified } from 'unified';
 
 import CTS_URN from './cts_urn';
+import { default as namedEntities } from '../../static/named-entity-annotations/tlg0525.tlg001.perseus-grc2.entities.json' with { type: 'json' };
 
 import type { PassageConfig } from './types';
 
@@ -16,142 +17,155 @@ const URN_REGEX = /@(?<urn>[^\n]+)(?:\n|$)/u;
 const WORK_URN = 'urn:cts:greekLit:tlg0525.tlg001';
 
 const MARKDOWN_PIPELINE = unified()
-  .use(remarkParse)
-  .use(remarkGfm)
-  .use(remarkRehype, { allowDangerousHtml: true })
-  .use(rehypeRaw)
-  .use(rehypeStringify);
+	.use(remarkParse)
+	.use(remarkGfm)
+	.use(remarkRehype, { allowDangerousHtml: true })
+	.use(rehypeRaw)
+	.use(rehypeStringify);
 
 let tableOfContents: PassageConfig[] | null = null;
 
 function createTableOfContents(paragraphUrns: CTS_URN[]) {
-  if (tableOfContents) {
-    return tableOfContents;
-  }
+	if (tableOfContents) {
+		return tableOfContents;
+	}
 
-  const toc = paragraphUrns.reduce((acc: PassageConfig[], curr) => {
-    if (!curr.passageComponent) {
-      console.warn('No passage component on ', curr);
-      return acc;
-    }
+	const toc = paragraphUrns.reduce((acc: PassageConfig[], curr) => {
+		if (!curr.passageComponent) {
+			console.warn('No passage component on ', curr);
+			return acc;
+		}
 
-    const [scroll, chapter, _paragraph] = curr.passageComponent.split('.');
+		const [scroll, chapter, _paragraph] = curr.passageComponent.split('.');
 
-    if (acc.length === 0) {
-      acc = [{
-        label: 'Scroll',
-        subpassages: [],
-        ref: scroll,
-        urn: `${WORK_URN}:${scroll}`
-      }]
-    }
+		if (acc.length === 0) {
+			acc = [
+				{
+					label: 'Scroll',
+					subpassages: [],
+					ref: scroll,
+					urn: `${WORK_URN}:${scroll}`
+				}
+			];
+		}
 
-    let currentTopLevelPassage = acc.pop() as unknown as PassageConfig;
+		let currentTopLevelPassage = acc.pop() as unknown as PassageConfig;
 
-    if (scroll !== currentTopLevelPassage.ref) {
-      const previousTopLevelPassage = currentTopLevelPassage;
-      console.log(scroll, currentTopLevelPassage.ref)
-      currentTopLevelPassage = {
-        label: 'Scroll',
-        subpassages: [],
-        ref: scroll,
-        urn: `${WORK_URN}:${scroll}`
-      };
+		if (scroll !== currentTopLevelPassage.ref) {
+			const previousTopLevelPassage = currentTopLevelPassage;
 
-      acc = [...acc, previousTopLevelPassage];
-    }
+			currentTopLevelPassage = {
+				label: 'Scroll',
+				subpassages: [],
+				ref: scroll,
+				urn: `${WORK_URN}:${scroll}`
+			};
 
-    const thisPassage = {
-      label: 'Chapter',
-      ref: chapter,
-      urn: `${WORK_URN}:${scroll}.${chapter}`
-    };
+			acc = [...acc, previousTopLevelPassage];
+		}
 
-    if (currentTopLevelPassage.subpassages?.at(-1)?.ref !== thisPassage.ref) {
-      currentTopLevelPassage.subpassages?.push(thisPassage);
-    }
+		const thisPassage = {
+			label: 'Chapter',
+			ref: chapter,
+			urn: `${WORK_URN}:${scroll}.${chapter}`
+		};
 
-    return [...acc, currentTopLevelPassage];
-  }, []);
+		if (currentTopLevelPassage.subpassages?.at(-1)?.ref !== thisPassage.ref) {
+			currentTopLevelPassage.subpassages?.push(thisPassage);
+		}
 
-  tableOfContents = toc;
+		return [...acc, currentTopLevelPassage];
+	}, []);
 
-  return tableOfContents;
+	tableOfContents = toc;
+
+	return tableOfContents;
 }
 
 async function getNodesForURN(filename: string, passageUrn: CTS_URN) {
-  const aprip = fs.readFileSync(filename).toString('utf-8');
-  const asBlocks = parseText(aprip);
-  const passageRef = passageUrn.passageComponent?.split('.').slice(0, 2).join('.');
-  let blocks = asBlocks.filter(Boolean);
+	const aprip = fs.readFileSync(filename).toString('utf-8');
+	const asBlocks = parseText(aprip);
+	const passageRef = passageUrn.passageComponent?.split('.').slice(0, 2).join('.');
+	let blocks = asBlocks.filter(Boolean);
 
-  const toc = createTableOfContents(blocks.map((b) => new CTS_URN(b?.urn as string)));
+	const toc = createTableOfContents(blocks.map((b) => new CTS_URN(b?.urn as string)));
 
-  blocks = blocks.filter((block) => {
-    const blockUrn = new CTS_URN(block?.urn as string);
-    const blockPassage = blockUrn?.passageComponent?.split('.').slice(0, 2).join('.');
+	blocks = blocks.filter((block) => {
+		const blockUrn = new CTS_URN(block?.urn as string);
+		const blockPassage = blockUrn?.passageComponent?.split('.').slice(0, 2).join('.');
 
-    return blockPassage === passageRef;
-  });
+		return blockPassage === passageRef;
+	});
 
-  // @ts-expect-error TODO: fix typescript thinking blocks can be undefined[]
-  blocks = await Promise.all(blocks.map(async (block) => ({
-    ...block,
-    body: String(await MARKDOWN_PIPELINE.process(block?.body))
-  })));
+	// @ts-expect-error TODO: fix typescript thinking blocks can be undefined[]
+	blocks = await Promise.all(
+		blocks.map(async (block) => ({
+			...block,
+			body: String(await MARKDOWN_PIPELINE.process(block?.body))
+		}))
+	);
 
-  return { blocks, toc };
+	return { blocks, toc };
 }
 
 export async function getPassage(urn: string) {
-  const passageUrn = new CTS_URN(urn);
-  const { blocks: criticalText, toc } = await getNodesForURN(
-    'static/editions/tlg0525.tlg001.aprip-nagy.md',
-    passageUrn
-  );
-  const { blocks: comments } = await getNodesForURN(
-    'static/commentaries/tlg0525.tlg001.apcip-nagy.md',
-    passageUrn
-  );
+	const passageUrn = new CTS_URN(urn);
+	const { blocks: criticalText, toc } = await getNodesForURN(
+		'static/editions/tlg0525.tlg001.aprip-nagy.md',
+		passageUrn
+	);
+	const { blocks: comments } = await getNodesForURN(
+		'static/commentaries/tlg0525.tlg001.apcip-nagy.md',
+		passageUrn
+	);
 
-  console.log(comments)
+	return { criticalText, comments, toc };
+}
 
-  return { criticalText, comments, toc };
+export function getNamedEntitiesForPassage(urn: string) {
+	const keys = Object.keys(namedEntities);
+	const passageUrn = new CTS_URN(urn);
+	const relevantKeys = keys.filter((k) =>
+		passageUrn.citations[0].startsWith(k.split('@')[0].split('.').slice(0, 2).join('.'))
+	);
+
+	// @ts-expect-error Not sure why namedEntities[k] is complaining
+	return relevantKeys.map((k) => namedEntities[k]);
 }
 
 export function parseText(markdownString: string) {
-  const { attributes, body } = frontMatter(markdownString);
-  const citables = body
-    .split('\n---\n')
-    .map((g: string) => g.trim())
-    .filter((g: string) => g !== '');
+	const { attributes, body } = frontMatter(markdownString);
+	const citables = body
+		.split('\n---\n')
+		.map((g: string) => g.trim())
+		.filter((g: string) => g !== '');
 
-  return citables.map((citable: string) => parseCitable(attributes as object, citable));
+	return citables.map((citable: string) => parseCitable(attributes as object, citable));
 }
 
 export function parseCitable(attributes: object, citable: string) {
-  const match = citable.match(URN_REGEX);
+	const match = citable.match(URN_REGEX);
 
-  if (match?.groups?.urn) {
-    const urn = match.groups.urn;
-    let withProperties = citable.replace(URN_REGEX, '').trim();
-    const citableProperties = {};
+	if (match?.groups?.urn) {
+		const urn = match.groups.urn;
+		let withProperties = citable.replace(URN_REGEX, '').trim();
+		const citableProperties = {};
 
-    let propMatch = withProperties.match(CITABLE_PROPERTY_REGEX);
+		let propMatch = withProperties.match(CITABLE_PROPERTY_REGEX);
 
-    while (propMatch?.groups?.name) {
-      // @ts-expect-error citableProperties are deliberately open-ended
-      citableProperties[propMatch.groups.name] = propMatch.groups.value;
+		while (propMatch?.groups?.name) {
+			// @ts-expect-error citableProperties are deliberately open-ended
+			citableProperties[propMatch.groups.name] = propMatch.groups.value;
 
-      withProperties = withProperties.replace(CITABLE_PROPERTY_REGEX, '').trim();
-      propMatch = withProperties.match(CITABLE_PROPERTY_REGEX);
-    }
+			withProperties = withProperties.replace(CITABLE_PROPERTY_REGEX, '').trim();
+			propMatch = withProperties.match(CITABLE_PROPERTY_REGEX);
+		}
 
-    return {
-      commentaryAttributes: attributes,
-      ...citableProperties,
-      body: withProperties,
-      urn
-    };
-  }
+		return {
+			commentaryAttributes: attributes,
+			...citableProperties,
+			body: withProperties,
+			urn
+		};
+	}
 }

@@ -40,7 +40,7 @@
 					</p>
 					<div class="mt-10 flex items-center gap-x-6">
 						<a
-							href="/passages/"
+							href="/passages/urn:cts:greekLit:tlg0525.tlg001:1.1"
 							class="rounded-md bg-yellow-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-yellow-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600 dark:bg-yellow-500 dark:hover:bg-yellow-400 dark:focus-visible:outline-yellow-500"
 							>Scroll 1 (Attica)</a
 						>
