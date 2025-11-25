@@ -82,6 +82,12 @@ function createTableOfContents(paragraphUrns: CTS_URN[]) {
 	return tableOfContents;
 }
 
+/**
+ * TODO:
+ * - [ ] add heading using closest section label ("Scroll 1: Attica", etc.)
+ * - [ ] separate bibliography, glossary, and abbreviations into their own pages
+ */
+
 async function getNodesForURN(filename: string, passageUrn: CTS_URN) {
 	const aprip = fs.readFileSync(filename).toString('utf-8');
 	const asBlocks = parseText(aprip);
@@ -132,6 +138,8 @@ export function getNamedEntitiesForPassage(urn: string) {
 	// @ts-expect-error Not sure why namedEntities[k] is complaining
 	return relevantKeys.map((k) => namedEntities[k]);
 }
+
+/** TODO: We also need to filter out some of the end-matter sections */
 
 export function parseText(markdownString: string) {
 	const { attributes, body } = frontMatter(markdownString);
