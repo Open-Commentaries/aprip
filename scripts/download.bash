@@ -16,11 +16,19 @@ APCIP_DESTINATION="static/commentaries/apcip.docx"
 
 # Check for required tools
 if ! command -v jq &> /dev/null; then
-  echo "Error: 'jq' is required. Install it with 'sudo apt install jq' or 'brew install jq'."
+  echo "Error: 'jq' is required. Install it with 'sudo apt install jq' or 'brew install jq'." >&2
   exit 1
 fi
 
-# Function to refresh access token
+# Check for required env vars
+for var in DROPBOX_CLIENT_ID DROPBOX_CLIENT_SECRET DROPBOX_REFRESH_TOKEN; do
+  if [ -z "${!var}" ]; then
+    echo "Error: $var is not set." >&2
+    exit 1
+  fi
+done
+
+# Function to refresh access token; prints token to stdout, errors to stderr
 refresh_token() {
   local response
   response=$(curl -s -X POST "https://api.dropboxapi.com/oauth2/token" \
@@ -30,7 +38,7 @@ refresh_token() {
     -d "client_secret=$DROPBOX_CLIENT_SECRET")
 
   if echo "$response" | grep -q "error"; then
-    echo "Error refreshing token: $(echo "$response" | jq -r '.error_description')"
+    echo "Error refreshing token: $(echo "$response" | jq -r '.error_description')" >&2
     exit 1
   fi
   echo "$response" | jq -r '.access_token'
