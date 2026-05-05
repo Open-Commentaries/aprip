@@ -71,9 +71,21 @@ download_file() {
     -o "$temp_file" \
     -w "%{http_code}" -s)
 
+  if [ "$http_code" = "401" ] || [ "$http_code" = "400" ]; then
+    echo "Auth failed (HTTP $http_code), refreshing token and retrying $label..." >&2
+    local new_token
+    new_token=$(refresh_token)
+    AUTH_HEADER="Authorization: Bearer $new_token"
+    http_code=$(curl -X POST "$URL" \
+      --header "$AUTH_HEADER" \
+      --header "$api_arg" \
+      -o "$temp_file" \
+      -w "%{http_code}" -s)
+  fi
+
   if [ "$http_code" != "200" ]; then
-    echo "Error downloading $label (HTTP $http_code):"
-    cat "$temp_file"
+    echo "Error downloading $label (HTTP $http_code):" >&2
+    cat "$temp_file" >&2
     rm -f "$temp_file"
     exit 1
   fi
@@ -84,8 +96,7 @@ download_file() {
 }
 
 echo "Fetching Dropbox access token..."
-TOKEN=$(refresh_token)
-AUTH_HEADER="Authorization: Bearer $TOKEN"
+AUTH_HEADER="Authorization: Bearer $DROPBOX_API_ACCESS_TOKEN"
 
 download_file "$APRIP_ARGS" "$APRIP_DESTINATION" "APRIP"
 download_file "$APCIP_ARGS" "$APCIP_DESTINATION" "APCIP"
