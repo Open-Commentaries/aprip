@@ -3,5 +3,13 @@
   "compatibility_date": "2025-12-16",
   "assets": {
     "directory": "./build"
+  },
+  "triggers": {
+    "crons": [
+      "0 2 * * *"
+    ]
+  },
+  "build": {
+    "command": "bash scripts/download.bash && bash scripts/apcip.bash && bash scripts/aprip.bash && npm run vite-build"
   }
 }
