@@ -11,7 +11,7 @@
 URL="https://content.dropboxapi.com/2/files/download"
 APRIP_ARGS="Dropbox-API-Arg: {\"path\":\"/Pausanias bible folder/GN_A Pausanias reader in progress, restarted 2020.05.01(1)-Gipson-6-18-2022(1).docx\"}"
 APRIP_DESTINATION="static/editions/aprip.docx"
-APCIP_ARGS="Dropbox-API-Arg: {\"path\":\"/Pausanias bible folder/GN_Ongoing comments on APRIP(1)(1)_with-images.docx\"}"
+APCIP_ARGS="Dropbox-API-Arg: {\"path\":\"/Open Commentary Update Files/GN_Ongoing comments on APRIP(1)(1)_with-images.docx\"}"
 APCIP_DESTINATION="static/commentaries/apcip.docx"
 
 # Check for required tools
