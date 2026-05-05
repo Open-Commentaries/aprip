@@ -63,18 +63,6 @@ download_file() {
     -o "$temp_file" \
     -w "%{http_code}" -s)
 
-  if [ "$http_code" = "401" ]; then
-    echo "Access token expired. Refreshing..."
-    NEW_TOKEN=$(refresh_token)
-    AUTH_HEADER="Authorization: Bearer $NEW_TOKEN"
-    echo "Retrying download of $label..."
-    http_code=$(curl -X POST "$URL" \
-      --header "$AUTH_HEADER" \
-      --header "$api_arg" \
-      -o "$temp_file" \
-      -w "%{http_code}" -s)
-  fi
-
   if [ "$http_code" != "200" ]; then
     echo "Error downloading $label (HTTP $http_code):"
     cat "$temp_file"
@@ -87,7 +75,9 @@ download_file() {
   echo "Downloaded $label successfully."
 }
 
-AUTH_HEADER="Authorization: Bearer $DROPBOX_API_ACCESS_TOKEN"
+echo "Fetching Dropbox access token..."
+TOKEN=$(refresh_token)
+AUTH_HEADER="Authorization: Bearer $TOKEN"
 
 download_file "$APRIP_ARGS" "$APRIP_DESTINATION" "APRIP"
 download_file "$APCIP_ARGS" "$APCIP_DESTINATION" "APCIP"
