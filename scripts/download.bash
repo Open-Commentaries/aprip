@@ -36,53 +36,58 @@ refresh_token() {
   echo "$response" | jq -r '.access_token'
 }
 
-# Initial auth header (will fail if token expired)
+# Validate that a file is a ZIP/DOCX by checking its magic bytes
+assert_docx() {
+  local file="$1"
+  local label="$2"
+  if ! xxd -l 4 "$file" 2>/dev/null | grep -q "504b 0304"; then
+    echo "Error: $label does not appear to be a valid DOCX file. Response body:"
+    cat "$file"
+    exit 1
+  fi
+}
+
+# Download a file, refreshing the token on 401, and validate the result
+download_file() {
+  local api_arg="$1"
+  local destination="$2"
+  local label="$3"
+
+  local temp_file
+  temp_file=$(mktemp)
+
+  local http_code
+  http_code=$(curl -X POST "$URL" \
+    --header "$AUTH_HEADER" \
+    --header "$api_arg" \
+    -o "$temp_file" \
+    -w "%{http_code}" -s)
+
+  if [ "$http_code" = "401" ]; then
+    echo "Access token expired. Refreshing..."
+    NEW_TOKEN=$(refresh_token)
+    AUTH_HEADER="Authorization: Bearer $NEW_TOKEN"
+    echo "Retrying download of $label..."
+    http_code=$(curl -X POST "$URL" \
+      --header "$AUTH_HEADER" \
+      --header "$api_arg" \
+      -o "$temp_file" \
+      -w "%{http_code}" -s)
+  fi
+
+  if [ "$http_code" != "200" ]; then
+    echo "Error downloading $label (HTTP $http_code):"
+    cat "$temp_file"
+    rm -f "$temp_file"
+    exit 1
+  fi
+
+  assert_docx "$temp_file" "$label"
+  mv "$temp_file" "$destination"
+  echo "Downloaded $label successfully."
+}
+
 AUTH_HEADER="Authorization: Bearer $DROPBOX_API_ACCESS_TOKEN"
 
-# Try download with current token, capture HTTP status
-temp_file=$(mktemp)
-http_code=$(curl -X POST "$URL" \
-  --header "$AUTH_HEADER" \
-  --header "$APRIP_ARGS" \
-  -o "$temp_file" \
-  -w "%{http_code}" -s)
-
-# Handle 401 (Unauthorized) by refreshing token
-if [ "$http_code" = "401" ]; then
-  echo "Access token expired. Refreshing..."
-  NEW_TOKEN=$(refresh_token)
-  AUTH_HEADER="Authorization: Bearer $NEW_TOKEN"
-  echo "Retrying download with new token..."
-  curl -X POST "$URL" --header "$AUTH_HEADER" --header "$APRIP_ARGS" -o "$APRIP_DESTINATION"
-else
-  # Move successful response to destination
-  mv "$temp_file" "$APRIP_DESTINATION"
-fi
-
-# Cleanup temporary file (if not used)
-rm -f "$temp_file"
-
-# Repeat for APCIP
-
-# Try download with current token, capture HTTP status
-temp_file=$(mktemp)
-http_code=$(curl -X POST "$URL" \
-  --header "$AUTH_HEADER" \
-  --header "$APCIP_ARGS" \
-  -o "$temp_file" \
-  -w "%{http_code}" -s)
-
-# Handle 401 (Unauthorized) by refreshing token
-if [ "$http_code" = "401" ]; then
-  echo "Access token expired. Refreshing..."
-  NEW_TOKEN=$(refresh_token)
-  AUTH_HEADER="Authorization: Bearer $NEW_TOKEN"
-  echo "Retrying download with new token..."
-  curl -X POST "$URL" --header "$AUTH_HEADER" --header "$APCIP_ARGS" -o "$APCIP_DESTINATION"
-else
-  # Move successful response to destination
-  mv "$temp_file" "$APCIP_DESTINATION"
-fi
-
-# Cleanup temporary file (if not used)
-rm -f "$temp_file"
+download_file "$APRIP_ARGS" "$APRIP_DESTINATION" "APRIP"
+download_file "$APCIP_ARGS" "$APCIP_DESTINATION" "APCIP"

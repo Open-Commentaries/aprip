@@ -36,12 +36,23 @@ jobs:
 
       - run: pnpm install
 
-      - name: Download source documents
-        env:
-          DROPBOX_CLIENT_ID: ${{ secrets.DROPBOX_CLIENT_ID }}
-          DROPBOX_CLIENT_SECRET: ${{ secrets.DROPBOX_CLIENT_SECRET }}
+      - name: Download APRIP
+        uses: gomes042/gh-actions-dropbox/files/download@23ce81287e83f01c19c9f60b1849b746db6616b5
+        with:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_CLIENT_ID }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_CLIENT_SECRET }}
           DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
-        run: bash scripts/download.bash
+          SOURCE_PATH: "/Pausanias bible folder/GN_A Pausanias reader in progress, restarted 2020.05.01(1)-Gipson-6-18-2022(1).docx"
+          DEST_PATH: "static/editions/aprip.docx"
+
+      - name: Download APCIP
+        uses: gomes042/gh-actions-dropbox/files/download@23ce81287e83f01c19c9f60b1849b746db6616b5
+        with:
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_CLIENT_ID }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_CLIENT_SECRET }}
+          DROPBOX_REFRESH_TOKEN: ${{ secrets.DROPBOX_REFRESH_TOKEN }}
+          SOURCE_PATH: "/Open Commentary Update Files/GN_Ongoing comments on APRIP(1)(1)_with-images.docx"
+          DEST_PATH: "static/commentaries/apcip.docx"
 
       - name: Process source documents
         run: bash scripts/aprip.bash && bash scripts/apcip.bash
