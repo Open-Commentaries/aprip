@@ -8,4 +8,4 @@ pandoc --lua-filter pandoc_filters/apcip.lua \
     --reference-location=block \
     --standalone \
     -t gfm -o static/commentaries/tlg0525.tlg001.apcip-nagy.md && \
-    gsed -i 's/static//g' 'static/commentaries/tlg0525.tlg001.apcip-nagy.md'
+    sed -i 's/static//g' 'static/commentaries/tlg0525.tlg001.apcip-nagy.md'
