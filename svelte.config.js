@@ -12,7 +12,7 @@ const config = {
 			precompress: true
 		}),
 		paths: {
-			base: ""
+			base: BASE_PATH ?? ''
 		}
 	},
 	extensions: ['.svelte', '.svx']
