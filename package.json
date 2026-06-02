@@ -48,12 +48,6 @@
     "vitest": "^3.2.3",
     "vitest-browser-svelte": "^0.1.0"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "esbuild"
-    ]
-  },
   "dependencies": {
     "@types/mdast": "^4.0.4",
     "@types/unist": "^3.0.3",
