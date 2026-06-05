@@ -33,3 +33,4 @@ storybook-static
 
 .venv
 build.zip
+regenerate_token.bash
